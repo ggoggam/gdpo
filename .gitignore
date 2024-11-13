@@ -1,0 +1,28 @@
+.vscode
+.idea
+
+# cache
+__pycache__
+.cache
+
+# logs
+wandb
+output
+logs
+runs
+
+# trl
+trl
+vllm
+
+.nfs*
+.DS_Store
+results.*
+
+safe-rlhf
+*.pdf
+*.parquet
+src/metrics
+
+gfn-hf
+cleanrl
