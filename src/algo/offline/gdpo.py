@@ -1,43 +1,98 @@
+from typing import Any, Literal
+
 import torch
 from transformers import PreTrainedModel
 
-from algo.offline import OfflineTrainer
+from algo.offline.dpo import DPOTrainer
 
 
-class GDPOTrainer(OfflineTrainer):
+class GDPOTrainer(DPOTrainer):
     ref_model: PreTrainedModel
 
     def _concat_forward(
         self,
-        model: torch.nn.Module,
-        concat_input_ids: torch.LongTensor,
-        concat_attention_mask: torch.BoolTensor,
-        concat_labels: torch.LongTensor,
-    ) -> tuple[torch.FloatTensor, torch.FloatTensor, torch.BoolTensor]:
-        logits = model(
-            input_ids=concat_input_ids,
-            attention_mask=concat_attention_mask,
+        model: PreTrainedModel,
+        chosen_input_ids: torch.LongTensor,
+        chosen_attention_mask: torch.LongTensor,
+        chosen_labels: torch.LongTensor,
+        rejected_input_ids: torch.LongTensor,
+        rejected_attention_mask: torch.LongTensor,
+        rejected_labels: torch.LongTensor,
+        reduce: Literal["none", "mean", "sum"] = "sum",
+    ) -> tuple[torch.FloatTensor]:
+        """Concatenates chosen and rejected response in batch dimension for faster training.
+
+        Args:
+            model (PreTrainedModel): model to forward
+            chosen_input_ids (torch.LongTensor): chosen input ids
+            chosen_attention_mask (torch.LongTensor): chosen attention mask
+            chosen_labels (torch.LongTensor): chosen labels (offline trajectory)
+            rejected_input_ids (torch.LongTensor): rejected input ids
+            rejected_attention_mask (torch.LongTensor): rejected attention mask
+            rejected_labels (torch.LongTensor): rejected labeles (offline trajectory)
+            reduce (Literal["none", "mean", "sum"], optional): reduction in vocab dimension. Defaults to "sum".
+
+        Returns:
+            tuple[torch.FloatTensor]: tuple of (logits, logps, mask)
+        """
+        # concatenate in batch dim
+        concat_input_ids = torch.cat((chosen_input_ids, rejected_input_ids), dim=0)
+        concat_attention_mask = torch.cat(
+            (chosen_attention_mask, rejected_attention_mask), dim=0
+        )
+        concat_labels = torch.cat((chosen_labels, rejected_labels), dim=0)
+        # concatenated forward
+        logits: torch.FloatTensor = model(
+            input_ids=concat_input_ids, attention_mask=concat_attention_mask
         )["logits"]
-        return ...
+        logps, mask = self.compute_token_logps(
+            logits=logits,
+            labels=concat_labels,
+            slide_mask=True,
+            temperature=self.config.algorithm.temperature,
+        )
+        # reduce logps
+        if reduce == "mean":
+            logps = logps.sum(dim=-1) / mask.sum(dim=-1)
+        elif reduce == "sum":
+            logps = logps.sum(dim=-1)
+        return (logits, logps, mask)
 
     def loss(
         self,
-        concat_input_ids: torch.LongTensor,
-        concat_attention_mask: torch.BoolTensor,
-        concat_labels: torch.LongTensor,
+        chosen_input_ids: torch.LongTensor,
+        chosen_attention_mask: torch.LongTensor,
+        chosen_labels: torch.LongTensor,
+        rejected_input_ids: torch.LongTensor,
+        rejected_attention_mask: torch.LongTensor,
+        rejected_labels: torch.LongTensor,
     ) -> dict[str, torch.Tensor]:
-        policy_logits, policy_logps, mask = self._concat_forward(
-            self.model, concat_input_ids, concat_attention_mask, concat_labels
+        (policy_logits, policy_logps, mask) = self._concat_forward(
+            model=self.model,
+            chosen_input_ids=chosen_input_ids,
+            chosen_attention_mask=chosen_attention_mask,
+            chosen_labels=chosen_labels,
+            rejected_input_ids=rejected_input_ids,
+            rejected_attention_mask=rejected_attention_mask,
+            rejected_labels=rejected_labels,
+            reduce="mean" if self.loss_type == "ipo" else "sum",
         )
 
         # log reward
         with torch.no_grad():
-            ref_logits, ref_logps, _ = self._concat_forward(
-                self.ref_model, concat_input_ids, concat_attention_mask, concat_labels
+            (ref_logits, ref_logps, _) = self._concat_forward(
+                model=self.ref_model,
+                chosen_input_ids=chosen_input_ids,
+                chosen_attention_mask=chosen_attention_mask,
+                chosen_labels=chosen_labels,
+                rejected_input_ids=rejected_input_ids,
+                rejected_attention_mask=rejected_attention_mask,
+                rejected_labels=rejected_labels,
+                reduce="mean" if self.loss_type == "ipo" else "sum",
             )
+
             # base reward
             kl_div = policy_logps - ref_logps
-
             log_rewards = (
                 ref_logps
                 + (ref_logits / self.gamma).log_softmax(dim=-1)[
@@ -88,3 +143,29 @@ class GDPOTrainer(OfflineTrainer):
             ).mean(),
         }
         return metrics
+
+    def train_step(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        metrics = self.loss(
+            chosen_input_ids=batch["chosen_input_ids"],
+            chosen_attention_mask=batch["chosen_attention_mask"],
+            chosen_labels=batch["chosen_labels"],
+            rejected_input_ids=batch["rejected_input_ids"],
+            rejected_attention_mask=batch["rejected_attention_mask"],
+            rejected_labels=batch["rejected_labels"],
+        )
+        self.accelerator.backward(metrics["{split}/loss"])
+        self.optimizer.step()
+        self.optimizer.zero_grad()
+        with torch.no_grad():
+            return self.gather_metrics(metrics)
+
+    def eval_step(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        metrics = self.loss(
+            chosen_input_ids=batch["chosen_input_ids"],
+            chosen_attention_mask=batch["chosen_attention_mask"],
+            chosen_labels=batch["chosen_labels"],
+            rejected_input_ids=batch["rejected_input_ids"],
+            rejected_attention_mask=batch["rejected_attention_mask"],
+            rejected_labels=batch["rejected_labels"],
+        )
+        return self.gather_metrics(metrics)

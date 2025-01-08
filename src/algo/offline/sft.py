@@ -1,8 +1,6 @@
-from typing import Any
-
 import torch
 
-from algo.offline import OfflineTrainer
+from algo.offline.base import OfflineTrainer
 
 
 class SFTTrainer(OfflineTrainer):
@@ -17,11 +15,11 @@ class SFTTrainer(OfflineTrainer):
         )
         return {"{split}/loss": outputs.loss}
 
-    def train_step(self, batch: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def train_step(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         metrics = self.loss(
-            input_ids=batch["input_ids"],
-            attention_mask=batch["attention_mask"],
-            labels=batch["labels"],
+            input_ids=batch["chosen_input_ids"],
+            attention_mask=batch["chosen_attention_mask"],
+            labels=batch["chosen_labels"],
         )
         self.accelerator.backward(metrics["{split}/loss"])
         self.optimizer.step()
@@ -29,10 +27,10 @@ class SFTTrainer(OfflineTrainer):
         with torch.no_grad():
             return self.gather_metrics(metrics)
 
-    def eval_step(self, batch: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def eval_step(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         metrics = self.loss(
-            input_ids=batch["input_ids"],
-            attention_mask=batch["attention_mask"],
-            labels=batch["labels"],
+            input_ids=batch["chosen_input_ids"],
+            attention_mask=batch["chosen_attention_mask"],
+            labels=batch["chosen_labels"],
         )
         return self.gather_metrics(metrics)

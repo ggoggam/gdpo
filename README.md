@@ -5,14 +5,21 @@ This is a repository containing the code for [GDPO: Learning to Directly Align L
 ### 🚧 Currently Under Construction
 This code base is being organized for ease of use.
 
+### Configurations
+For configuration and script arguments, the repository uses [`tyro`](https://brentyi.github.io/tyro).
+For training, you may use the following command for instance:
+```shell
+accelerate launch --config-file {config_file} train.py --run-name [experiment_name] algorithm:dpo --algorithm.beta 0.5
+```
+
 ### Training
 Make sure you modify the appropriate `accelerate` config located in `config/accelerate` directory according to your machine configuration. From the `/src` directory, run training by one of the following commands with a choice of machine type.
 
 ```shell
-accelerate launch --config-file config/accelerate/{type}.yaml train.py
+accelerate launch --config-file config/accelerate/{type}.yaml train.py ...
 ```
 ```shell
-python -u -m accelerate.commands.launch --config-file conifg/accelerate/{type}.yaml train.py
+python -u -m accelerate.commands.launch --config-file conifg/accelerate/{type}.yaml train.py ...
 ```
 
 For now, we only provide offline training, which was the focus of the paper.

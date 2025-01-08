@@ -1,0 +1,10 @@
+{% for message in messages %}
+    {% if loop.index == 0 and message.role == "assistant" %}
+        {{ message.content + eos_token }}
+    {% else %}
+        {{ '<|im_start|>' + message.role + '\n' + message.content + eos_token }}
+    {% endif %}
+{% endfor %}
+{% if add_generation_prompt %}
+    {{ '<|im_start|>assistant\n' }}
+{% endif %}
