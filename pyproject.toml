@@ -1,0 +1,24 @@
+[project]
+name = "gdpo"
+version = "0.1.0"
+description = "Code for `GDPO: Learning to Directly Align Language Models with Diversity Using GFlowNets`"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "accelerate>=1.2.1",
+    "backoff>=2.2.1",
+    "datasets>=3.2.0",
+    "deepspeed>=0.16.2",
+    "openai>=1.59.6",
+    "optree>=0.13.1",
+    "polars>=1.19.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.9.1",
+    "sentence-transformers>=3.3.1",
+    "tyro>=0.9.8",
+    "vllm>=0.6.6.post1",
+]
+
+[tool.ruff]
+include = ["pyproject.toml", "src/**/*.py"]
+line-length = 80
