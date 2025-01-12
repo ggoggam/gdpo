@@ -1,9 +1,5 @@
-from dataset.other import (
-    PairedAnthropicHH,
-    PairedTLDR,
-    UnpairedAnthropicHH,
-    UnpairedTLDR,
-)
+from dataset.other import (PairedAnthropicHH, PairedTLDR, UnpairedAnthropicHH,
+                           UnpairedTLDR)
 
 __all__ = [
     "UnpairedAnthropicHH",

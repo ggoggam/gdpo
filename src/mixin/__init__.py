@@ -1,13 +1,7 @@
-from mixin.instantiate import (
-    InstantiateModelMixin,
-    InstantiateTrainerDatasetMixin,
-)
-from mixin.utilities import (
-    ComputeMixin,
-    GatherMetricsMixin,
-    ReleaseMemoryMixin,
-    TorchDtypeMixin,
-)
+from mixin.instantiate import (InstantiateModelMixin,
+                               InstantiateTrainerDatasetMixin)
+from mixin.utilities import (ComputeMixin, GatherMetricsMixin,
+                             ReleaseMemoryMixin, TorchDtypeMixin)
 
 __all__ = [
     "TorchDtypeMixin",

@@ -3,12 +3,8 @@ import warnings
 
 import tyro
 from accelerate import Accelerator
-from accelerate.utils import (
-    GradientAccumulationPlugin,
-    is_bf16_available,
-    is_cuda_available,
-    set_seed,
-)
+from accelerate.utils import (GradientAccumulationPlugin, is_bf16_available,
+                              is_cuda_available, set_seed)
 
 from algo.offline.dpo import DPOTrainer
 from algo.offline.gdpo import GDPOTrainer

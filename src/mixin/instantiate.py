@@ -5,25 +5,15 @@ from typing import Union
 import datasets
 import torch
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
-from transformers import (
-    AutoModel,
-    AutoTokenizer,
-    PreTrainedModel,
-    get_scheduler,
-)
+from transformers import (AutoModel, AutoTokenizer, PreTrainedModel,
+                          get_scheduler)
 from transformers.utils import is_flash_attn_2_available
 
 from config import SFTConfig
-from dataset import (
-    PairedAnthropicHH,
-    PairedTLDR,
-    UnpairedAnthropicHH,
-    UnpairedTLDR,
-)
-from mixin.base import (
-    TrainerMixinProtocol,
-    TrainerWithReferenceModelMixinProtocol,
-)
+from dataset import (PairedAnthropicHH, PairedTLDR, UnpairedAnthropicHH,
+                     UnpairedTLDR)
+from mixin.base import (TrainerMixinProtocol,
+                        TrainerWithReferenceModelMixinProtocol)
 from mixin.utilities import TorchDtypeMixin
 
 

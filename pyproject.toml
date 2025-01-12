@@ -9,6 +9,7 @@ dependencies = [
     "backoff>=2.2.1",
     "datasets>=3.2.0",
     "deepspeed>=0.16.2",
+    "isort>=5.13.2",
     "openai>=1.59.6",
     "optree>=0.13.1",
     "polars>=1.19.0",

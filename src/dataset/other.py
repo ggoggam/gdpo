@@ -1,8 +1,5 @@
-from dataset.base import (
-    BasePairedDataset,
-    BasePromptOnlyDataset,
-    BaseUnpairedDataset,
-)
+from dataset.base import (BasePairedDataset, BasePromptOnlyDataset,
+                          BaseUnpairedDataset)
 
 
 class PromptOnlyAnthropicHH(BasePromptOnlyDataset):
