@@ -14,8 +14,6 @@ Make sure you modify the appropriate `accelerate` config located in `config/acce
 
 ```shell
 uv run accelerate launch --config-file config/accelerate/{type}.yaml train.py ...
-# or equivalently
-uv run -m accelerate.commands.launch --config-file config/accelerate/{MACHINE_TYPE}.yaml train.py [OPTIONS]
 ```
 
 For now, we only provide offline training, which was the focus of the paper.
