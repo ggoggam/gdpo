@@ -13,7 +13,7 @@ Refer to `config/__init__.py` for details and arguments.
 Make sure you modify the appropriate `accelerate` config located in `config/accelerate` directory according to your machine configuration. From the `/src` directory, run training by one of the following commands with a choice of machine type.
 
 ```shell
-uv run accelerate launch --config-file config/accelerate/{type}.yaml train.py ...
+uv run accelerate launch --config-file config/accelerate/{type}.yaml train.py {algorithm_name} {algorithm_options}
 ```
 
 For now, we only provide offline training, which was the focus of the paper.
