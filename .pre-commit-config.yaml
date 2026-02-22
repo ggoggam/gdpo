@@ -21,9 +21,3 @@ repos:
       - id: ruff
       # Run the formatter.
       - id: ruff-format
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort (python)
-        args: ["--profile", "black", "--line-width", "80"]

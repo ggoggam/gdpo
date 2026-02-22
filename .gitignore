@@ -31,3 +31,7 @@ mlruns
 
 # experiment
 experiments
+
+# python
+.venv
+__pycache__
